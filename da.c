@@ -31,9 +31,7 @@ int da_initialize(DynamicArray* da, size_t initial_capacity, size_t element_size
 {
 	da->_data = calloc(initial_capacity, element_size);
 	if (da->_data == NULL)
-	{
 		return 1;
-	}
 
 	da->_count = 0;
 	da->_capacity = initial_capacity;
@@ -49,9 +47,7 @@ int da_initialize(DynamicArray* da, size_t initial_capacity, size_t element_size
 int da_free(DynamicArray* da)
 {
 	if (da->_data == NULL)
-	{
 		return 1;
-	}
 
 	free(da->_data);
 	da->_data = NULL;
@@ -65,9 +61,7 @@ int da_free(DynamicArray* da)
 static void* da_retrieve(DynamicArray* da, size_t index)
 {
 	if (da->_data == NULL)
-	{
 		return NULL;
-	}
 
 	return (char*)da->_data + (da->_element_size * index);
 }
@@ -78,14 +72,10 @@ static void* da_retrieve(DynamicArray* da, size_t index)
 void* da_at(DynamicArray* da, size_t index)
 {
 	if (da->_data == NULL)
-	{
 		return NULL;
-	}
 
 	if (index >= da->_count)
-	{
 		return NULL;
-	}
 
 	return da_retrieve(da, index);
 }
@@ -97,18 +87,14 @@ void* da_at(DynamicArray* da, size_t index)
 int da_expand(DynamicArray* da, size_t expand_amount)
 {
 	if (da->_data == NULL)
-	{
 		return 1;
-	}
 
 	void* temp_ptr;
 	temp_ptr = realloc(da->_data, (da->_capacity * da->_element_size)
 	                                  + (expand_amount * da->_element_size));
 
 	if (temp_ptr == NULL)
-	{
 		return 2;
-	}
 
 	da->_data = temp_ptr;
 	da->_capacity += expand_amount;
@@ -122,23 +108,17 @@ int da_expand(DynamicArray* da, size_t expand_amount)
 int da_shrink(DynamicArray* da)
 {
 	if (da->_data == NULL)
-	{
 		return 1;
-	}
 
 	if (da->_count == 0)
-	{
 		return 2;
-	}
 
 	size_t new_capacity = da->_count;
 	void* temp_ptr;
 	temp_ptr = realloc(da->_data, new_capacity * da->_element_size);
 
 	if (temp_ptr == NULL)
-	{
 		return 3;
-	}
 
 	da->_data = temp_ptr;
 	da->_capacity = new_capacity;
