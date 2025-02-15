@@ -1,5 +1,5 @@
 BasedOnStyle: LLVM
-UseTab: ForIndentation
+UseTab: Always
 IndentWidth: 4
 TabWidth: 4
 ColumnLimit: 96
@@ -28,5 +28,5 @@ AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: false
