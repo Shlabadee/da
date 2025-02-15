@@ -30,8 +30,7 @@ static bool h_memlap(const void* ptr1, size_t size1, const void* ptr2, size_t si
 int da_initialize(DynamicArray* da, size_t initial_capacity, size_t element_size)
 {
 	da->_data = calloc(initial_capacity, element_size);
-	if (da->_data == NULL)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
 
 	da->_count = 0;
 	da->_capacity = initial_capacity;
@@ -46,8 +45,7 @@ int da_initialize(DynamicArray* da, size_t initial_capacity, size_t element_size
  */
 int da_free(DynamicArray* da)
 {
-	if (da->_data == NULL)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
 
 	free(da->_data);
 	da->_data = NULL;
@@ -60,8 +58,7 @@ int da_free(DynamicArray* da)
 
 static void* da_retrieve(DynamicArray* da, size_t index)
 {
-	if (da->_data == NULL)
-		return NULL;
+	if (da->_data == NULL) return NULL;
 
 	return (char*)da->_data + (da->_element_size * index);
 }
@@ -71,11 +68,9 @@ static void* da_retrieve(DynamicArray* da, size_t index)
  */
 void* da_at(DynamicArray* da, size_t index)
 {
-	if (da->_data == NULL)
-		return NULL;
+	if (da->_data == NULL) return NULL;
 
-	if (index >= da->_count)
-		return NULL;
+	if (index >= da->_count) return NULL;
 
 	return da_retrieve(da, index);
 }
@@ -86,15 +81,13 @@ void* da_at(DynamicArray* da, size_t index)
  */
 int da_expand(DynamicArray* da, size_t expand_amount)
 {
-	if (da->_data == NULL)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
 
 	void* temp_ptr;
 	temp_ptr = realloc(da->_data, (da->_capacity * da->_element_size)
-	                                  + (expand_amount * da->_element_size));
+									  + (expand_amount * da->_element_size));
 
-	if (temp_ptr == NULL)
-		return 2;
+	if (temp_ptr == NULL) return DA_ERROR_DATA_EXPANSION_FAILED;
 
 	da->_data = temp_ptr;
 	da->_capacity += expand_amount;
@@ -107,23 +100,28 @@ int da_expand(DynamicArray* da, size_t expand_amount)
  */
 int da_shrink(DynamicArray* da)
 {
-	if (da->_data == NULL)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
 
 	if (da->_count == 0)
-		return 2;
+	{
+		free(da->_data);
+		da->_data = NULL;
+		da->_capacity = 0;
+		return DA_WARNING_COUNT_ZERO;
+	}
 
+	// Shrink to exact size
 	size_t new_capacity = da->_count;
-	void* temp_ptr;
-	temp_ptr = realloc(da->_data, new_capacity * da->_element_size);
+	void* temp_ptr = realloc(da->_data, new_capacity * da->_element_size);
 
-	if (temp_ptr == NULL)
-		return 3;
+	// Only update on success
+	if (temp_ptr != NULL)
+	{
+		da->_data = temp_ptr;
+		da->_capacity = new_capacity;
+	}
 
-	da->_data = temp_ptr;
-	da->_capacity = new_capacity;
-
-	return 0;
+	return temp_ptr ? 0 : DA_ERROR_DATA_SHRINK_FAILED;
 }
 
 /**
@@ -132,20 +130,19 @@ int da_shrink(DynamicArray* da)
  */
 int da_push(DynamicArray* da, void* element)
 {
-	if (da->_data == NULL)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
 
 	if (da->_count >= da->_capacity)
 	{
-		if (da_expand(da, da->default_expand_amount))
-			return 2;
+		int error;
+		if (error = da_expand(da, da->default_expand_amount)) return error;
 	}
 
 	void* temp_ptr;
 	temp_ptr = da_retrieve(da, da->_count);
 
 	if (memcpy(temp_ptr, element, da->_element_size) == NULL)
-		return 3; // A weird error
+		return DA_ERROR_UNKNOWN; // A weird error
 
 	++da->_count;
 
@@ -157,8 +154,9 @@ int da_push(DynamicArray* da, void* element)
  */
 int da_pop(DynamicArray* da)
 {
-	if (da->_data == NULL || da->_count == 0)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
+
+	if (da->_count == 0) return DA_WARNING_COUNT_ZERO;
 
 	--da->_count;
 
@@ -167,38 +165,36 @@ int da_pop(DynamicArray* da)
 
 int da_insert(DynamicArray* dest, DynamicArray* src, size_t pos)
 {
-	if (!dest || !src || pos > dest->_count)
-		return 1;
+	if (!dest || !src || pos > dest->_count) return DA_ERROR_DATA_NULL;
 
 	// Detect memory overlap
-	if (h_memlap(dest->_data, dest->_count * dest->_element_size, src->_data,
-	             src->_count * src->_element_size))
-		return 2;
+	if (h_memlap(dest->_data, (dest->_count * dest->_element_size), src->_data,
+				 (src->_count * src->_element_size)))
+		return DA_ERROR_OVERLAPPING_MEMORY;
 
 	// Expand if necessary
-	if (dest->_count + src->_count > dest->_capacity)
+	if ((dest->_count + src->_count) > dest->_capacity)
 	{
-		if (da_expand(dest, src->_count) != 0)
-			return 1;
+		int error = da_expand(dest, src->_count);
+		if (error) return error;
 	}
 
 	// Perform memory move and insert
-	memmove((char*)dest->_data + (pos + src->_count) * dest->_element_size,
-	        (char*)dest->_data + pos * dest->_element_size,
-	        (dest->_count - pos) * dest->_element_size);
+	memmove(((char*)dest->_data + ((pos + src->_count) * dest->_element_size)),
+			((char*)dest->_data + (pos * dest->_element_size)),
+			((dest->_count - pos) * dest->_element_size));
 
-	memcpy((char*)dest->_data + pos * dest->_element_size, src->_data,
-	       src->_count * src->_element_size);
+	memcpy(((char*)dest->_data + (pos * dest->_element_size)), src->_data,
+		   (src->_count * src->_element_size));
 
 	dest->_count += src->_count;
 	return 0;
 }
 
 int da_sort(DynamicArray* da, size_t count, size_t offset,
-            int (*compar)(const void*, const void*))
+			int (*compar)(const void*, const void*))
 {
-	if (da->_data == NULL)
-		return 1;
+	if (da->_data == NULL) return DA_ERROR_DATA_NULL;
 
 	qsort((char*)da->_data + (offset * da->_element_size), count, da->_element_size, compar);
 
