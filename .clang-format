@@ -1,6 +1,8 @@
 BasedOnStyle: LLVM
+UseTab: ForIndentation
 IndentWidth: 4
-ColumnLimit: 128
+TabWidth: 4
+ColumnLimit: 96
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterCaseLabel: true
