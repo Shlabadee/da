@@ -56,7 +56,7 @@ int da_free(DynamicArray* da)
 	return 0;
 }
 
-static void* da_retrieve(DynamicArray* da, size_t index)
+static void* h_da_retrieve(DynamicArray* da, size_t index)
 {
 	if (da->_data == NULL) return NULL;
 
@@ -72,7 +72,7 @@ void* da_at(DynamicArray* da, size_t index)
 
 	if (index >= da->_count) return NULL;
 
-	return da_retrieve(da, index);
+	return h_da_retrieve(da, index);
 }
 
 /**
@@ -139,7 +139,7 @@ int da_push(DynamicArray* da, void* element)
 	}
 
 	void* temp_ptr;
-	temp_ptr = da_retrieve(da, da->_count);
+	temp_ptr = h_da_retrieve(da, da->_count);
 
 	if (memcpy(temp_ptr, element, da->_element_size) == NULL)
 		return DA_ERROR_UNKNOWN; // A weird error
