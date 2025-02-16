@@ -12,6 +12,7 @@ extern "C" {
 #define DA_WARNING_COUNT_ZERO 0xf2
 #define DA_ERROR_DATA_SHRINK_FAILED 3
 #define DA_ERROR_OVERLAPPING_MEMORY 4
+#define DA_ERROR_INVALID_POSITION
 #define DA_ERROR_UNKNOWN 0xf
 
 typedef struct DynamicArray

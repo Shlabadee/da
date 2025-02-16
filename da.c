@@ -165,7 +165,7 @@ int da_pop(DynamicArray* da)
 
 int da_insert(DynamicArray* dest, DynamicArray* src, size_t pos)
 {
-	if (!dest || !src || pos > dest->_count) return DA_ERROR_DATA_NULL;
+	if (pos > dest->_count) return DA_ERROR_INVALID_POSITION;
 
 	// Detect memory overlap
 	if (h_memlap(dest->_data, (dest->_count * dest->_element_size), src->_data,
